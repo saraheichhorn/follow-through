@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Follow-Through — meeting to accountability</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1F4; --panel:#FFFFFF; --ink:#15202E; --muted:#5B6878; --line:#D5DBE2;
+  --navy:#1F3A5F; --navy-soft:#E3EAF3;
+  --late:#B8322A; --late-soft:#FBE9E7;
+  --soon:#9A6A00; --soon-soft:#FFF3D6;
+  --done:#2B7050; --done-soft:#E3F2EA;
+  --orphan:#6B3FA0; --orphan-soft:#EFE7F8;
+  --sans:"Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --serif:"Newsreader", Georgia, "Times New Roman", serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F151D; --panel:#18212C; --ink:#E6ECF2; --muted:#9AA7B5; --line:#2A3542;
+    --navy:#8FB3E0; --navy-soft:#1E2C3D;
+    --late:#F0776C; --late-soft:#3A1E1C; --soon:#E5B847; --soon-soft:#352B12;
+    --done:#6CC49A; --done-soft:#16302A; --orphan:#C3A2EC; --orphan-soft:#2A2040;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F151D; --panel:#18212C; --ink:#E6ECF2; --muted:#9AA7B5; --line:#2A3542;
+  --navy:#8FB3E0; --navy-soft:#1E2C3D;
+  --late:#F0776C; --late-soft:#3A1E1C; --soon:#E5B847; --soon-soft:#352B12;
+  --done:#6CC49A; --done-soft:#16302A; --orphan:#C3A2EC; --orphan-soft:#2A2040;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 60px}
+
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px}
+.brand h1{font-size:clamp(30px,4.4vw,46px);line-height:1.02;letter-spacing:-0.025em;font-weight:800;margin:0}
+.brand p{font-family:var(--serif);font-size:18px;color:var(--muted);margin:8px 0 0;max-width:56ch}
+.ghost{background:none;border:1px solid var(--line);border-radius:6px;padding:7px 12px;color:var(--muted);cursor:pointer;font-size:13px}
+.ghost:hover{color:var(--ink);border-color:var(--muted)}
+
+/* health strip: the signature element */
+.health{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:22px}
+.health-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.health-head strong{font-size:17px}
+.health-head span{color:var(--muted);font-size:13px}
+.bar{display:flex;height:14px;border-radius:3px;overflow:hidden;margin:12px 0 10px;background:var(--line)}
+.bar i{display:block;height:100%;transition:width .5s ease}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted)}
+.legend b{color:var(--ink);font-weight:700;margin-right:3px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+
+.grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:22px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px}
+.panel h2{font-size:18px;margin:0 0 4px;letter-spacing:-0.01em}
+.panel .sub{color:var(--muted);font-size:13.5px;margin:0 0 14px}
+
+label.f{display:block;font-size:13px;font-weight:600;margin:0 0 5px}
+input.t,textarea{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:9px 10px}
+textarea{min-height:300px;resize:vertical;font-size:13.5px;line-height:1.55}
+.row2{display:grid;grid-template-columns:1fr 150px;gap:10px;margin-bottom:12px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;align-items:center}
+.primary{background:var(--navy);color:var(--panel);border:0;border-radius:6px;padding:10px 16px;font-weight:700;cursor:pointer}
+.primary:disabled{opacity:.55;cursor:wait}
+.linkish{background:none;border:0;color:var(--navy);cursor:pointer;padding:4px 0;font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.status{font-size:13px;color:var(--muted);min-height:20px;margin-top:10px}
+.status.err{color:var(--late)}
+
+/* extraction result */
+.found{margin-top:16px;border-top:1px solid var(--line);padding-top:14px;display:none}
+.found.show{display:block}
+.found h3{font-size:14px;margin:0 0 6px}
+.found ul{margin:0 0 12px;padding-left:18px;font-size:14px}
+.found li{margin-bottom:4px}
+.q{font-family:var(--serif);color:var(--muted)}
+
+/* tracker */
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.tab{border:1px solid var(--line);background:none;border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer;color:var(--muted)}
+.tab[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.list{display:flex;flex-direction:column}
+.item{display:grid;grid-template-columns:26px minmax(0,1fr) 130px 128px;gap:10px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item .what{min-width:0}
+.item .task{font-weight:600;line-height:1.35}
+.item.isdone .task{text-decoration:line-through;color:var(--muted)}
+.item .meta{font-size:12.5px;color:var(--muted);margin-top:3px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{font-size:11.5px;font-weight:700;padding:2px 7px;border-radius:4px}
+.chip.late{background:var(--late-soft);color:var(--late)}
+.chip.soon{background:var(--soon-soft);color:var(--soon)}
+.chip.orphan{background:var(--orphan-soft);color:var(--orphan)}
+.chip.ok{background:var(--done-soft);color:var(--done)}
+.item input[type=checkbox]{width:18px;height:18px;accent-color:var(--done);cursor:pointer}
+.item input.own,.item input.due{width:100%;border:1px solid transparent;background:transparent;border-radius:5px;padding:5px 6px;font-size:13.5px}
+.item input.own:hover,.item input.due:hover,.item input.own:focus,.item input.due:focus{border-color:var(--line);background:var(--bg)}
+.item input.own:placeholder-shown{border-color:var(--orphan);border-style:dashed}
+@media (max-width:620px){
+  .item{grid-template-columns:26px minmax(0,1fr);}
+  .item .own,.item .due{grid-column:2}
+}
+.empty{padding:26px 6px;color:var(--muted);text-align:center;font-family:var(--serif);font-size:16px}
+
+/* brief */
+.brief{margin-top:22px}
+.brief-out{font-family:var(--serif);font-size:17px;line-height:1.6;max-width:70ch;white-space:pre-wrap}
+.brief-out:empty{display:none}
+.note{font-size:12.5px;color:var(--muted);margin-top:10px}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Follow-Through</h1>
+      <p>Turn meeting notes into owned, dated commitments, and see what's slipping before the next exec sync does.</p>
+    </div>
+    <button class="ghost" id="reset">Reset demo data</button>
+  </header>
+
+  <section class="health" aria-live="polite">
+    <div class="health-head">
+      <strong id="healthLine">Commitment health</strong>
+      <span id="healthSub"></span>
+    </div>
+    <div class="bar" id="bar" role="img" aria-label="Commitment status breakdown"></div>
+    <div class="legend" id="legend"></div>
+  </section>
+
+  <div class="grid">
+    <section class="panel">
+      <h2>Add a meeting</h2>
+      <p class="sub">Paste a transcript or rough notes. Claude pulls out decisions, action items, owners and deadlines.</p>
+      <div class="row2">
+        <div><label class="f" for="mtgName">Meeting</label><input class="t" id="mtgName" value="Weekly leadership sync"></div>
+        <div><label class="f" for="mtgDate">Date</label><input class="t" id="mtgDate" type="date"></div>
+      </div>
+      <label class="f" for="notes">Transcript or notes</label>
+      <textarea id="notes" placeholder="Paste meeting notes here…"></textarea>
+      <div class="actions">
+        <button class="primary" id="extract">Extract commitments</button>
+        <button class="linkish" id="loadSample">Load sample transcript</button>
+      </div>
+      <div class="status" id="status"></div>
+      <div class="found" id="found"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Commitment tracker</h2>
+      <p class="sub">Every open commitment across meetings. Blank owners are flagged. Edit owners and dates inline.</p>
+      <div class="tabs" role="group" aria-label="Filter commitments">
+        <button class="tab" data-f="open" aria-pressed="true">Open</button>
+        <button class="tab" data-f="late" aria-pressed="false">Overdue</button>
+        <button class="tab" data-f="orphan" aria-pressed="false">No owner</button>
+        <button class="tab" data-f="done" aria-pressed="false">Done</button>
+        <button class="tab" data-f="all" aria-pressed="false">All</button>
+      </div>
+      <div class="list" id="list"></div>
+    </section>
+  </div>
+
+  <section class="panel brief">
+    <h2>Exec brief</h2>
+    <p class="sub">A short note for the leadership team: what slipped, what's at risk, and what needs a decision.</p>
+    <button class="primary" id="briefBtn">Write this week's brief</button>
+    <div class="status" id="briefStatus"></div>
+    <div class="brief-out" id="briefOut"></div>
+  </section>
+</div>
+
+<script>
+(function(){
+const DAY = 86400000;
+const today0 = new Date(); today0.setHours(0,0,0,0);
+const iso = d => { const x = new Date(d); return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0"); };
+const rel = n => iso(today0.getTime() + n*DAY);
+const TODAY = rel(0);
+const KEY = "followthrough.v1";
+const $ = id => document.getElementById(id);
+
+// Seed: commitments from a meeting two weeks ago (fictional company, Halden Logistics)
+function seed(){
+  const m = "Exec staff sync";
+  const md = rel(-14);
+  return { items:[
+    {id:"s1",task:"Finalize Q4 pricing change for mid-market tier",owner:"Priya",due:rel(-5),done:false,meeting:m,mdate:md},
+    {id:"s2",task:"Send vendor consolidation proposal to CFO",owner:"",due:rel(-2),done:false,meeting:m,mdate:md},
+    {id:"s3",task:"Make hiring decision on VP Sales shortlist",owner:"Marcus",due:rel(2),done:false,meeting:m,mdate:md},
+    {id:"s4",task:"Complete churn root-cause review for top 20 accounts",owner:"Luis",due:rel(8),done:false,meeting:m,mdate:md},
+    {id:"s5",task:"Update board pre-read template",owner:"Dana",due:rel(-7),done:true,meeting:m,mdate:md}
+  ], decisions:[] };
+}
+let state;
+try { state = JSON.parse(localStorage.getItem(KEY)) || seed(); } catch(e){ state = seed(); }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+
+const SAMPLE = `Weekly leadership sync — Halden Logistics
+Attendees: Jordan (CEO), Priya (CRO), Marcus (VP People), Luis (COO), Dana (CFO), Sam (Chief of Staff)
+
+Jordan: Quick check on pricing — Priya, where are we on the mid-market change?
+Priya: Still waiting on finance to sign off on the discount floor. I think we can land it by Friday.
+Dana: I'll get the floor approved by Wednesday so Priya isn't blocked.
+Jordan: Okay. Decision: we're holding the enterprise price flat through Q1. No changes there.
+
+Luis: The Reno warehouse lease is up in 60 days. We need a renew vs. relocate recommendation.
+Jordan: Agreed. Someone should pull the numbers on that.
+(no owner named)
+
+Marcus: Final two VP Sales candidates are in. I want a panel debrief done by end of next week.
+Jordan: Good. Decision: we're going with the internal-first approach — if Kim is strong, we promote.
+
+Sam: Board meeting is in three weeks. I'll circulate the pre-read draft by the 10th... actually, let's say two weeks from today.
+Dana: I'll need the Q3 close numbers from Luis for that.
+Luis: I can get Dana the Q3 ops metrics by Monday.
+
+Jordan: Also we keep talking about the vendor consolidation proposal. Where is it?
+(silence)
+Sam: It never got an owner last time. I'll flag it.
+Jordan: Let's make Dana own it, due next Tuesday.
+
+Open question: do we pause the Austin expansion until the churn review lands?`;
+
+function nextDow(dow, minAhead){ // 0=Sun
+  let d = new Date(today0); let n=0;
+  do { d = new Date(d.getTime()+DAY); n++; } while(d.getDay()!==dow || n<minAhead);
+  return iso(d);
+}
+function sampleExtraction(){
+  return {
+    decisions:["Enterprise pricing stays flat through Q1.","VP Sales search goes internal-first; promote Kim if the panel is strong."],
+    actions:[
+      {task:"Approve mid-market discount floor",owner:"Dana",due:nextDow(3,1),quote:"I'll get the floor approved by Wednesday"},
+      {task:"Land mid-market pricing change",owner:"Priya",due:nextDow(5,1),quote:"I think we can land it by Friday"},
+      {task:"Renew vs. relocate recommendation for Reno warehouse lease",owner:"",due:null,quote:"Someone should pull the numbers on that"},
+      {task:"Complete VP Sales panel debrief",owner:"Marcus",due:rel(((5-today0.getDay()+7)%7)+7),quote:"panel debrief done by end of next week"},
+      {task:"Circulate board pre-read draft",owner:"Sam",due:rel(14),quote:"let's say two weeks from today"},
+      {task:"Send Q3 ops metrics to Dana",owner:"Luis",due:nextDow(1,1),quote:"I can get Dana the Q3 ops metrics by Monday"},
+      {task:"Send vendor consolidation proposal to CFO",owner:"Dana",due:nextDow(2,1),quote:"make Dana own it, due next Tuesday"}
+    ],
+    questions:["Pause the Austin expansion until the churn review is done?"]
+  };
+}
+
+function flags(it){
+  if (it.done) return {k:"done"};
+  const f = {late:false,soon:false,orphan:!it.owner.trim()};
+  if (it.due){ const diff = (new Date(it.due+"T00:00:00") - today0)/DAY; if (diff<0) f.late=Math.round(-diff); else if (diff<=3) f.soon=true; }
+  return f;
+}
+function fmtDue(d){ if(!d) return "No date"; const x=new Date(d+"T00:00:00"); return x.toLocaleDateString(undefined,{month:"short",day:"numeric"}); }
+
+let filter = "open";
+function renderHealth(){
+  const it = state.items; const c={late:0,soon:0,orphan:0,ok:0,done:0};
+  it.forEach(i=>{ const f=flags(i); if(f.k==="done"){c.done++;return;} if(f.late)c.late++; else if(f.orphan)c.orphan++; else if(f.soon)c.soon++; else c.ok++; });
+  const total = it.length || 1; const open = it.length - c.done;
+  const segs=[["late","Overdue",c.late],["orphan","No owner",c.orphan],["soon","Due in 3 days",c.soon],["ok","On track",c.ok],["done","Done",c.done]];
+  const color={late:"var(--late)",orphan:"var(--orphan)",soon:"var(--soon)",ok:"var(--navy)",done:"var(--done)"};
+  $("bar").innerHTML = segs.map(s=>`<i style="width:${s[2]/total*100}%;background:${color[s[0]]}" title="${s[1]}: ${s[2]}"></i>`).join("");
+  $("legend").innerHTML = segs.map(s=>`<span><span class="sw" style="background:${color[s[0]]}"></span><b>${s[2]}</b>${s[1]}</span>`).join("");
+  const risk = c.late + c.orphan;
+  $("healthLine").textContent = risk ? `${risk} of ${open} open commitments need attention` : `All ${open} open commitments are owned and on time`;
+  $("healthSub").textContent = `${state.items.length} tracked across ${new Set(it.map(i=>i.meeting+i.mdate)).size} meetings`;
+}
+function renderList(){
+  const L = $("list");
+  let rows = state.items.filter(i=>{
+    const f=flags(i);
+    if(filter==="open") return !i.done;
+    if(filter==="done") return i.done;
+    if(filter==="late") return !i.done && f.late;
+    if(filter==="orphan") return !i.done && f.orphan;
+    return true;
+  });
+  rows.sort((a,b)=>(a.done-b.done)||((a.due||"9999")<(b.due||"9999")?-1:1));
+  if(!rows.length){ L.innerHTML = `<div class="empty">${filter==="late"?"Nothing overdue.":filter==="orphan"?"Every commitment has an owner.":"Nothing here yet. Add a meeting to start tracking."}</div>`; return; }
+  L.innerHTML = "";
+  rows.forEach(i=>{
+    const f=flags(i); const el=document.createElement("div");
+    el.className="item"+(i.done?" isdone":"");
+    const chips = [];
+    if(f.late) chips.push(`<span class="chip late">${f.late}d overdue</span>`);
+    if(f.soon) chips.push(`<span class="chip soon">Due soon</span>`);
+    if(f.orphan) chips.push(`<span class="chip orphan">No owner</span>`);
+    if(i.done) chips.push(`<span class="chip ok">Done</span>`);
+    el.innerHTML = `<input type="checkbox" aria-label="Mark done" ${i.done?"checked":""}>
+      <div class="what"><div class="task"></div><div class="meta">${chips.join("")}<span class="src"></span></div></div>
+      <input class="own" placeholder="Assign owner" aria-label="Owner">
+      <input class="due" type="date" aria-label="Due date">`;
+    el.querySelector(".task").textContent = i.task;
+    el.querySelector(".src").textContent = `${i.meeting}, ${fmtDue(i.mdate)}`;
+    const own = el.querySelector(".own"); own.value = i.owner;
+    const due = el.querySelector(".due"); due.value = i.due || "";
+    el.querySelector("input[type=checkbox]").onchange = e=>{ i.done=e.target.checked; save(); render(); };
+    own.onchange = e=>{ i.owner=e.target.value.trim(); save(); render(); };
+    due.onchange = e=>{ i.due=e.target.value||null; save(); render(); };
+    L.appendChild(el);
+  });
+}
+function render(){ renderHealth(); renderList(); }
+
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
+  filter=b.dataset.f; document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false")); renderList();
+});
+$("reset").onclick=()=>{ state=seed(); save(); $("found").className="found"; $("briefOut").textContent=""; render(); };
+$("mtgDate").value = TODAY;
+$("loadSample").onclick=()=>{ $("notes").value=SAMPLE; $("mtgName").value="Weekly leadership sync"; $("mtgDate").value=TODAY; $("status").textContent="Sample loaded. Fictional company, fictional people."; $("status").className="status"; };
+
+let samplePromise = (window.claude && window.claude.use) ? window.claude.use("sample").catch(()=>null) : Promise.resolve(null);
+
+function codeCopy(code){
+  if(code==="not_granted") return "Claude access wasn't allowed, so this ran in demo mode.";
+  if(code==="rate_limited") return "Too many requests right now. Wait a minute and try again.";
+  return "Claude couldn't finish that request. Try again, or shorten the notes.";
+}
+
+function showFound(res, mode){
+  const F=$("found");
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  F.innerHTML = `<h3>Decisions (${res.decisions.length})</h3><ul>${res.decisions.map(d=>`<li>${esc(d)}</li>`).join("")||"<li>None recorded</li>"}</ul>
+    <h3>Commitments added (${res.actions.length})</h3><ul>${res.actions.map(a=>`<li><b>${esc(a.task)}</b> — ${a.owner?esc(a.owner):"<em>no owner</em>"}, ${fmtDue(a.due)}${a.quote?`<br><span class="q">“${esc(a.quote)}”</span>`:""}</li>`).join("")}</ul>
+    ${res.questions&&res.questions.length?`<h3>Open questions</h3><ul>${res.questions.map(q=>`<li>${esc(q)}</li>`).join("")}</ul>`:""}
+    ${mode==="demo"?`<p class="note">Shown from a pre-computed extraction of the sample transcript.</p>`:""}`;
+  F.className="found show";
+}
+function addActions(res){
+  const m=$("mtgName").value.trim()||"Meeting", md=$("mtgDate").value||TODAY;
+  res.actions.forEach((a,k)=>state.items.push({id:"m"+Date.now()+k,task:a.task,owner:(a.owner||"").trim(),due:a.due||null,done:false,meeting:m,mdate:md}));
+  save(); render();
+}
+
+$("extract").onclick = async ()=>{
+  const notes=$("notes").value.trim(); const st=$("status"); st.className="status";
+  if(!notes){ st.textContent="Paste some notes first, or load the sample transcript."; st.className="status err"; return; }
+  const btn=$("extract"); btn.disabled=true; st.textContent="Reading the meeting…";
+  const isSample = notes===SAMPLE.trim();
+  try{
+    const sample = await samplePromise;
+    if(!sample){
+      if(isSample){ const r=sampleExtraction(); addActions(r); showFound(r,"demo"); st.textContent="Added to the tracker."; }
+      else { st.textContent="Live extraction needs Claude, which isn't available in this view. Load the sample transcript to see how it works."; st.className="status err"; }
+      return;
+    }
+    const prompt = `You are a Chief of Staff's assistant. Extract accountability items from these meeting notes.
+Meeting date: ${$("mtgDate").value||TODAY} (weekday: ${new Date(($("mtgDate").value||TODAY)+"T00:00:00").toLocaleDateString("en-US",{weekday:"long"})}).
+Rules:
+- An action is a concrete commitment someone (or no one) agreed to do. Phrase each as a short imperative task.
+- owner: the person's first name if clearly assigned or volunteered, else "" (do NOT guess; "someone should" = "").
+- due: resolve relative dates ("Friday", "end of next week", "two weeks from today") to YYYY-MM-DD relative to the meeting date; null if none given.
+- quote: the shortest phrase from the notes that shows the commitment (under 15 words).
+- decisions: things the group decided, one sentence each.
+- questions: unresolved questions raised.
+Return ONLY JSON: {"decisions":[string],"actions":[{"task":string,"owner":string,"due":string|null,"quote":string}],"questions":[string]}
+
+NOTES:
+${notes}`;
+    const res = await sample.json(prompt,{modelTier:"default"});
+    res.decisions=res.decisions||[]; res.actions=res.actions||[]; res.questions=res.questions||[];
+    addActions(res); showFound(res,"live"); st.textContent=`Added ${res.actions.length} commitments to the tracker.`;
+  }catch(e){
+    if(isSample){ const r=sampleExtraction(); addActions(r); showFound(r,"demo"); st.textContent=codeCopy(e&&e.code); }
+    else { st.textContent=codeCopy(e&&e.code); st.className="status err"; }
+  }finally{ btn.disabled=false; }
+};
+
+function fallbackBrief(){
+  const open=state.items.filter(i=>!i.done);
+  const late=open.filter(i=>flags(i).late), orphan=open.filter(i=>flags(i).orphan), soon=open.filter(i=>flags(i).soon);
+  const L=[];
+  L.push(`${open.length} commitments are open. ${late.length} are overdue and ${orphan.length} have no owner.`);
+  if(late.length) L.push("\nSlipped:\n"+late.map(i=>`• ${i.task} (${i.owner||"no owner"}, ${flags(i).late} days late)`).join("\n"));
+  if(orphan.length) L.push("\nNeeds an owner today:\n"+orphan.map(i=>`• ${i.task}`).join("\n"));
+  if(soon.length) L.push("\nDue in the next three days:\n"+soon.map(i=>`• ${i.task} (${i.owner})`).join("\n"));
+  L.push("\nAsk for the next sync: confirm owners for anything unassigned, and get a new date or a kill decision on every overdue item.");
+  return L.join("\n");
+}
+$("briefBtn").onclick = async ()=>{
+  const out=$("briefOut"), st=$("briefStatus"), btn=$("briefBtn"); btn.disabled=true; st.className="status"; st.textContent="Thinking…"; out.textContent="";
+  try{
+    const sample = await samplePromise;
+    if(!sample){ out.textContent=fallbackBrief(); st.textContent="Generated from tracker rules. Open in Claude for an AI-written brief."; return; }
+    const data = state.items.map(i=>({task:i.task,owner:i.owner||null,due:i.due,done:i.done,meeting:i.meeting,days_overdue:flags(i).late||0}));
+    const prompt = `Today is ${TODAY}. You are a Chief of Staff writing a weekly accountability brief for the CEO and exec team.
+Using the commitment data below, write a brief under 180 words in plain text (no markdown headers, no bold). Structure: one opening sentence on overall health; "Slipped:" with overdue items and why they matter; "Needs an owner:"; "At risk this week:"; then one line "Decisions needed:" naming what the exec team should decide at the next sync. Be direct and specific; use names. Use "•" for list items.
+
+DATA:
+${JSON.stringify(data)}`;
+    await sample(prompt,{modelTier:"default",onText:({text})=>{ out.textContent=text; st.textContent=""; }});
+    st.textContent="";
+  }catch(e){
+    out.textContent = (e&&e.text) || fallbackBrief();
+    st.textContent = codeCopy(e&&e.code);
+  }finally{ btn.disabled=false; }
+};
+
+render();
+})();
+</script>
+</body>
+</html>
