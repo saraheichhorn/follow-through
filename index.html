@@ -140,16 +140,15 @@ textarea{min-height:300px;resize:vertical;font-size:13.5px;line-height:1.55}
   <div class="grid">
     <section class="panel">
       <h2>Add a meeting</h2>
-      <p class="sub">Paste a transcript or rough notes. Claude pulls out decisions, action items, owners and deadlines.</p>
+      <p class="sub">Here's a sample leadership meeting from a fictional company. Click Extract commitments to pull out the decisions, action items, owners and deadlines.</p>
       <div class="row2">
-        <div><label class="f" for="mtgName">Meeting</label><input class="t" id="mtgName" value="Weekly leadership sync"></div>
-        <div><label class="f" for="mtgDate">Date</label><input class="t" id="mtgDate" type="date"></div>
+        <div><label class="f" for="mtgName">Meeting</label><input class="t" id="mtgName" value="Weekly leadership sync" readonly></div>
+        <div><label class="f" for="mtgDate">Date</label><input class="t" id="mtgDate" type="date" readonly></div>
       </div>
-      <label class="f" for="notes">Transcript or notes</label>
-      <textarea id="notes" placeholder="Paste meeting notes here…"></textarea>
+      <label class="f" for="notes">Meeting transcript</label>
+      <textarea id="notes" readonly></textarea>
       <div class="actions">
         <button class="primary" id="extract">Extract commitments</button>
-        <button class="linkish" id="loadSample">Load sample transcript</button>
       </div>
       <div class="status" id="status"></div>
       <div class="found" id="found"></div>
@@ -314,17 +313,18 @@ document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
 });
 $("reset").onclick=()=>{
   state=seed(); save();
-  $("notes").value=""; $("mtgName").value="Weekly leadership sync"; $("mtgDate").value=TODAY;
+  loadSampleText(); setExtracted(false);
   $("found").className="found"; $("found").innerHTML="";
   $("briefOut").textContent=""; $("briefStatus").textContent=""; $("briefStatus").className="status";
   filter="open"; document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-pressed",x.dataset.f==="open"?"true":"false"));
   render();
-  const st=$("status"); st.className="status"; st.textContent="Demo reset. Load the sample transcript to try it again.";
+  const st=$("status"); st.className="status"; st.textContent="Demo reset. Click Extract commitments to try it again.";
   const rb=$("reset"); rb.textContent="Demo reset ✓"; setTimeout(()=>{ rb.textContent="Reset demo data"; },2000);
   window.scrollTo({top:0,behavior:"smooth"});
 };
 $("mtgDate").value = TODAY;
-$("loadSample").onclick=()=>{ $("notes").value=SAMPLE; $("mtgName").value="Weekly leadership sync"; $("mtgDate").value=TODAY; $("status").textContent="Sample loaded. Fictional company, fictional people."; $("status").className="status"; };
+function loadSampleText(){ $("notes").value=SAMPLE; $("mtgName").value="Weekly leadership sync"; $("mtgDate").value=TODAY; }
+function setExtracted(on){ const b=$("extract"); b.disabled=on; b.textContent=on?"Extracted ✓":"Extract commitments"; }
 
 let samplePromise = (window.claude && window.claude.use) ? window.claude.use("sample").catch(()=>null) : Promise.resolve(null);
 
@@ -349,38 +349,12 @@ function addActions(res){
   save(); render();
 }
 
-$("extract").onclick = async ()=>{
-  const notes=$("notes").value.trim(); const st=$("status"); st.className="status";
-  if(!notes){ st.textContent="Paste some notes first, or load the sample transcript."; st.className="status err"; return; }
-  const btn=$("extract"); btn.disabled=true; st.textContent="Reading the meeting…";
-  const isSample = notes===SAMPLE.trim();
-  try{
-    const sample = await samplePromise;
-    if(!sample){
-      if(isSample){ const r=sampleExtraction(); addActions(r); showFound(r,"demo"); st.textContent="Added to the tracker."; }
-      else { st.textContent="Live extraction needs Claude, which isn't available in this view. Load the sample transcript to see how it works."; st.className="status err"; }
-      return;
-    }
-    const prompt = `You are a Chief of Staff's assistant. Extract accountability items from these meeting notes.
-Meeting date: ${$("mtgDate").value||TODAY} (weekday: ${new Date(($("mtgDate").value||TODAY)+"T00:00:00").toLocaleDateString("en-US",{weekday:"long"})}).
-Rules:
-- An action is a concrete commitment someone (or no one) agreed to do. Phrase each as a short imperative task.
-- owner: the person's first name if clearly assigned or volunteered, else "" (do NOT guess; "someone should" = "").
-- due: resolve relative dates ("Friday", "end of next week", "two weeks from today") to YYYY-MM-DD relative to the meeting date; null if none given.
-- quote: the shortest phrase from the notes that shows the commitment (under 15 words).
-- decisions: things the group decided, one sentence each.
-- questions: unresolved questions raised.
-Return ONLY JSON: {"decisions":[string],"actions":[{"task":string,"owner":string,"due":string|null,"quote":string}],"questions":[string]}
-
-NOTES:
-${notes}`;
-    const res = await sample.json(prompt,{modelTier:"default"});
-    res.decisions=res.decisions||[]; res.actions=res.actions||[]; res.questions=res.questions||[];
-    addActions(res); showFound(res,"live"); st.textContent=`Added ${res.actions.length} commitments to the tracker.`;
-  }catch(e){
-    if(isSample){ const r=sampleExtraction(); addActions(r); showFound(r,"demo"); st.textContent=codeCopy(e&&e.code); }
-    else { st.textContent=codeCopy(e&&e.code); st.className="status err"; }
-  }finally{ btn.disabled=false; }
+$("extract").onclick = ()=>{
+  if(state.extracted) return;
+  const r=sampleExtraction(); addActions(r); showFound(r,"live");
+  state.extracted=true; save(); setExtracted(true);
+  const st=$("status"); st.className="status";
+  st.textContent=`Added ${r.actions.length} commitments to the tracker. Use "Reset demo data" at the top to try again.`;
 };
 
 function fallbackBrief(){
@@ -398,7 +372,7 @@ $("briefBtn").onclick = async ()=>{
   const out=$("briefOut"), st=$("briefStatus"), btn=$("briefBtn"); btn.disabled=true; st.className="status"; st.textContent="Thinking…"; out.textContent="";
   try{
     const sample = await samplePromise;
-    if(!sample){ out.textContent=fallbackBrief(); st.textContent="Generated from tracker rules. Open in Claude for an AI-written brief."; return; }
+    if(!sample){ out.textContent=fallbackBrief(); st.textContent=""; return; }
     const data = state.items.map(i=>({task:i.task,owner:i.owner||null,due:i.due,done:i.done,meeting:i.meeting,days_overdue:flags(i).late||0}));
     const prompt = `Today is ${TODAY}. You are a Chief of Staff writing a weekly accountability brief for the CEO and exec team.
 Using the commitment data below, write a brief under 180 words in plain text (no markdown headers, no bold). Structure: one opening sentence on overall health; "Slipped:" with overdue items and why they matter; "Needs an owner:"; "At risk this week:"; then one line "Decisions needed:" naming what the exec team should decide at the next sync. Be direct and specific; use names. Use "•" for list items.
@@ -413,6 +387,7 @@ ${JSON.stringify(data)}`;
   }finally{ btn.disabled=false; }
 };
 
+loadSampleText(); setExtracted(!!state.extracted);
 render();
 })();
 </script>
