@@ -312,7 +312,17 @@ function render(){ renderHealth(); renderList(); }
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
   filter=b.dataset.f; document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false")); renderList();
 });
-$("reset").onclick=()=>{ state=seed(); save(); $("found").className="found"; $("briefOut").textContent=""; render(); };
+$("reset").onclick=()=>{
+  state=seed(); save();
+  $("notes").value=""; $("mtgName").value="Weekly leadership sync"; $("mtgDate").value=TODAY;
+  $("found").className="found"; $("found").innerHTML="";
+  $("briefOut").textContent=""; $("briefStatus").textContent=""; $("briefStatus").className="status";
+  filter="open"; document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-pressed",x.dataset.f==="open"?"true":"false"));
+  render();
+  const st=$("status"); st.className="status"; st.textContent="Demo reset. Load the sample transcript to try it again.";
+  const rb=$("reset"); rb.textContent="Demo reset ✓"; setTimeout(()=>{ rb.textContent="Reset demo data"; },2000);
+  window.scrollTo({top:0,behavior:"smooth"});
+};
 $("mtgDate").value = TODAY;
 $("loadSample").onclick=()=>{ $("notes").value=SAMPLE; $("mtgName").value="Weekly leadership sync"; $("mtgDate").value=TODAY; $("status").textContent="Sample loaded. Fictional company, fictional people."; $("status").className="status"; };
 
